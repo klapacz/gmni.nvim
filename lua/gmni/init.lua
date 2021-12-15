@@ -1,4 +1,4 @@
-local Job = require'plenary.job'
+local Job = require('plenary.job')
 local api = vim.api
 local M = {}
 
@@ -9,12 +9,12 @@ function M.get(url)
 		on_exit = vim.schedule_wrap(function(j, result)
 			local lines = j:result()
 
-			api.nvim_command("tabnew")
+			api.nvim_command('tabnew')
 
 			api.nvim_buf_set_lines(0, 0, #lines, false, lines)
 			api.nvim_buf_set_name(0, url)
 
-			api.nvim_buf_set_option(0, "modifiable", false)
+			api.nvim_buf_set_option(0, 'modifiable', false)
 		end),
 	}):start()
 end
