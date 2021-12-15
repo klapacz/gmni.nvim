@@ -12,7 +12,8 @@ local function edit(path)
 	Job:new({
 		command = 'gmni',
 		args = { '-j', 'always', path },
-		on_exit = vim.schedule_wrap(function(j, _)
+		on_exit = vim.schedule_wrap(function(j, status)
+			log.info("Status: ", status)
 			local contents = j:result()
 
 			api.nvim_buf_set_option(bufnr, 'modifiable', true)
