@@ -1,8 +1,7 @@
 local Job = require('plenary.job')
 local api = vim.api
-local M = {}
 
-function M.get(url)
+local function get(url)
 	Job:new({
 		command = 'gmni',
 		args = { '-j', 'always', url },
@@ -19,4 +18,7 @@ function M.get(url)
 	}):start()
 end
 
-return M
+return {
+	get = get,
+}
+
