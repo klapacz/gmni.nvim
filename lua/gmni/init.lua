@@ -3,29 +3,26 @@ local Job = require('plenary.job')
 
 local api = vim.api
 
-local function get(url)
+local function edit(path)
+	log.info("BufReadCmd: ", path)
+
+	local bufnr = vim.api.nvim_get_current_buf()
+	api.nvim_buf_set_name(bufnr, path)
+
 	Job:new({
 		command = 'gmni',
-		args = { '-j', 'always', url },
-		on_exit = vim.schedule_wrap(function(j, result)
-			local lines = j:result()
+		args = { '-j', 'always', path },
+		on_exit = vim.schedule_wrap(function(j, _)
+			local contents = j:result()
 
-			api.nvim_command('tabnew')
-
-			api.nvim_buf_set_lines(0, 0, #lines, false, lines)
-			api.nvim_buf_set_name(0, url)
-
-			api.nvim_buf_set_option(0, 'modifiable', false)
+			api.nvim_buf_set_option(bufnr, 'modifiable', true)
+			api.nvim_buf_set_lines(bufnr, 0, -1, false, contents)
+			api.nvim_buf_set_option(bufnr, 'modifiable', false)
 		end),
 	}):start()
 end
 
-local function edit(path)
-	log.info("BufReadCmd: ", path)
-end
-
 return {
-	get = get,
 	edit = edit,
 }
 
