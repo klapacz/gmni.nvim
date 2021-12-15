@@ -1,4 +1,6 @@
+local log = require('gmni.log')
 local Job = require('plenary.job')
+
 local api = vim.api
 
 local function get(url)
@@ -18,7 +20,12 @@ local function get(url)
 	}):start()
 end
 
+local function edit(path)
+	log.info("BufReadCmd: ", path)
+end
+
 return {
 	get = get,
+	edit = edit,
 }
 
