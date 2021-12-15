@@ -9,11 +9,12 @@ function M.get(url)
 		on_exit = vim.schedule_wrap(function(j, result)
 			local lines = j:result()
 
-			-- create new tab and get buffer id
 			api.nvim_command("tabnew")
-			local bufnr = api.nvim_win_get_buf(0)
 
-			api.nvim_buf_set_lines(bufnr, 0, #lines, false, lines)
+			api.nvim_buf_set_lines(0, 0, #lines, false, lines)
+			api.nvim_buf_set_name(0, url)
+
+			api.nvim_buf_set_option(0, "modifiable", false)
 		end),
 	}):start()
 end
