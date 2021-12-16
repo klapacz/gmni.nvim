@@ -38,6 +38,18 @@ local function follow_link()
 	log.warn("Not a gemini link.")
 end
 
+local function load_to_buf(bufnr, content)
+	api.nvim_buf_set_option(bufnr, 'modifiable', true)
+	api.nvim_buf_set_option(bufnr, 'readonly', false)
+
+	api.nvim_buf_set_lines(bufnr, 0, -1, false, content)
+
+	api.nvim_buf_set_option(bufnr, 'modifiable', false)
+	api.nvim_buf_set_option(bufnr, 'readonly', true)
+	api.nvim_buf_set_option(bufnr, 'swapfile', false)
+	api.nvim_buf_set_option(bufnr, 'buftype', 'nowrite')
+end
+
 local function load(url, kwargs)
 	kwargs = kwargs or {}
 
@@ -76,13 +88,7 @@ local function load(url, kwargs)
 				api.nvim_buf_set_option(bufnr, 'filetype', 'gemtext')
 			end
 
-			api.nvim_buf_set_option(bufnr, 'modifiable', true)
-			api.nvim_buf_set_lines(bufnr, 0, -1, false, result)
-
-			api.nvim_buf_set_option(bufnr, 'modifiable', false)
-			api.nvim_buf_set_option(bufnr, 'readonly', true)
-			api.nvim_buf_set_option(bufnr, 'swapfile', false)
-			api.nvim_buf_set_option(bufnr, 'buftype', 'nowrite')
+			load_to_buf(bufnr, result)
 
 			api.nvim_buf_set_keymap(bufnr, 'n', '<cr>', '<cmd>lua require("gmni").follow_link()<cr>', { silent = true })
 			api.nvim_buf_set_keymap(bufnr, 'n', '<tab>', '<cmd>call GmniNextLink()<cr>', { silent = true })
