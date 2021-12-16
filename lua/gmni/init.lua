@@ -1,19 +1,25 @@
 local log = require('gmni.log')
+local url_parser = require('gmni.url')
 local Job = require('plenary.job')
 
 local api = vim.api
 
 local function follow_link()
 	local line = api.nvim_get_current_line()
-	local url = vim.split(line, "%s")[2]
+	local raw_url = vim.split(line, "%s")[2]
+	local url = url_parser.parse(raw_url)
 
-	if vim.startswith(url, "gemini://") then
-		api.nvim_command(":e " .. url)
+	if url.scheme == "gemini" then
+		api.nvim_command(":e " .. raw_url)
 		return
 	end
 
-	local bufname = api.nvim_buf_get_name(0)
-	api.nvim_command(":e " .. bufname .. url)
+	-- relative urls
+	if url.scheme == nil then
+		local curr_url = url_parser.parse(api.nvim_buf_get_name(0))
+		local resolved = curr_url:resolve(raw_url)
+		api.nvim_command(":e " .. resolved)
+	end
 end
 
 local function edit(url)
