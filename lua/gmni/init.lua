@@ -6,18 +6,31 @@ local api = vim.api
 
 local function follow_link()
 	local line = api.nvim_get_current_line()
-	local raw_url = vim.split(line, "%s")[2]
-	local url = url_parser.parse(raw_url)
+
+	if not vim.startswith(line, "=>") then
+		log.warn("Not link line!")
+		return
+	end
+
+	line = line:gsub("^=>", "")
+	local segments = vim.split(line, "%s", {trimempty = true})
+
+	if #segments < 1 then
+		log.warn("Link not provided!")
+		return
+	end
+
+	local url = url_parser.parse(segments[1])
 
 	if url.scheme == "gemini" then
-		api.nvim_command(":e " .. raw_url)
+		api.nvim_command(":e " .. url:normalize())
 		return
 	end
 
 	-- relative urls
 	if url.scheme == nil then
 		local curr_url = url_parser.parse(api.nvim_buf_get_name(0))
-		local resolved = curr_url:resolve(raw_url)
+		local resolved = curr_url:resolve(url:normalize())
 		api.nvim_command(":e " .. resolved)
 	end
 end
