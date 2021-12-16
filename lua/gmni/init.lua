@@ -22,7 +22,7 @@ local function follow_link()
 	end
 end
 
-local function edit(url)
+local function load(url)
 	local bufnr = vim.api.nvim_get_current_buf()
 	api.nvim_buf_set_name(bufnr, url)
 
@@ -51,6 +51,6 @@ end
 
 return {
 	follow_link = follow_link,
-	edit = edit,
+	load = load,
 }
 
