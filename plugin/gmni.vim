@@ -4,6 +4,16 @@ function! Gmni()
 	tabnew gemini://gemini.circumlunar.space/
 endfun
 
+function! GmniNextLink()
+	/^=>
+	norm 0w
+endfun
+
+function! GmniPrevLink()
+	?^=>
+	norm 0w
+endfun
+
 command! Gmni call Gmni()
 
 augroup Gmni

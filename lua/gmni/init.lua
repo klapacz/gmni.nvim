@@ -40,8 +40,8 @@ local function edit(url)
 			api.nvim_buf_set_option(bufnr, 'filetype', 'gemtext')
 
 			api.nvim_buf_set_keymap(bufnr, 'n', '<cr>', '<cmd>lua require("gmni").follow_link()<cr>', { silent = true })
-			api.nvim_buf_set_keymap(bufnr, 'n', '<tab>', '/^=><cr>w<cmd>noh<cr>', { silent = true })
-			api.nvim_buf_set_keymap(bufnr, 'n', '<s-tab>', '?^=><cr>nw<cmd>noh<cr>', { silent = true })
+			api.nvim_buf_set_keymap(bufnr, 'n', '<tab>', '<cmd>call GmniNextLink()<cr>', { silent = true })
+			api.nvim_buf_set_keymap(bufnr, 'n', '<s-tab>', '<cmd>call GmniPrevLink()<cr>', { silent = true })
 		end),
 	}):start()
 end
