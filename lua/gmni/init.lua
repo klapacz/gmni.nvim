@@ -72,24 +72,34 @@ local function load(url, kwargs)
 		command = 'gmni',
 		args = args,
 
-		on_exit = vim.schedule_wrap(function(job, status)
-			if status == 6 then
+		on_exit = vim.schedule_wrap(function(job, exit_code)
+			if exit_code == 6 then
 				local stderr_result = job:stderr_result()
 				local option = vim.fn.input("Trust " .. stderr_result[2] .. "? (always/once): ")
 				load(url, { trust = option })
 				return
 			end
 
-			if status ~= 0 then
+			if exit_code ~= 0 then
 				log.debug("Error: ", unpack(job:stderr_result()))
 				return
 			end
 
 			local result = job:result()
-			local gemini_status = table.remove(result, 1)
-			log.info("Status: ", status, gemini_status)
+			local header = table.remove(result, 1)
 
-			if string.find(gemini_status, "text/gemini") then
+			-- handle redirection
+			if vim.startswith(header, "3") then
+				local status_code, meta = unpack(vim.split(header, " "))
+				log.warn("Redirection with code:", status_code, "to", meta)
+				goto_link(meta)
+				api.nvim_command(":bdelete " .. bufnr)
+				return
+			end
+
+			log.info("Status: ", exit_code, header)
+
+			if string.find(header, "text/gemini") then
 				api.nvim_buf_set_option(bufnr, 'filetype', 'gemtext')
 			end
 
