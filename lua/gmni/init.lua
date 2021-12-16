@@ -4,6 +4,25 @@ local Job = require('plenary.job')
 
 local api = vim.api
 
+local function goto_link(raw_url)
+	local url = url_parser.parse(raw_url)
+
+	if url.scheme == "gemini" then
+		api.nvim_command(":e " .. url:normalize())
+		return
+	end
+
+	-- relative urls
+	if url.scheme == nil then
+		local curr_url = url_parser.parse(api.nvim_buf_get_name(0))
+		local resolved = curr_url:resolve(url:normalize())
+		api.nvim_command(":e " .. resolved)
+		return
+	end
+
+	log.warn("Not a gemini link.")
+end
+
 local function follow_link()
 	local line = api.nvim_get_current_line()
 
@@ -20,22 +39,7 @@ local function follow_link()
 		return
 	end
 
-	local url = url_parser.parse(segments[1])
-
-	if url.scheme == "gemini" then
-		api.nvim_command(":e " .. url:normalize())
-		return
-	end
-
-	-- relative urls
-	if url.scheme == nil then
-		local curr_url = url_parser.parse(api.nvim_buf_get_name(0))
-		local resolved = curr_url:resolve(url:normalize())
-		api.nvim_command(":e " .. resolved)
-		return
-	end
-
-	log.warn("Not a gemini link.")
+	goto_link(segments[1])
 end
 
 local function load_to_buf(bufnr, content)
@@ -77,6 +81,7 @@ local function load(url, kwargs)
 			end
 
 			if status ~= 0 then
+				log.debug("Error: ", unpack(job:stderr_result()))
 				return
 			end
 
