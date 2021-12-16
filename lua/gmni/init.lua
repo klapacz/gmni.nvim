@@ -35,17 +35,38 @@ local function follow_link()
 	end
 end
 
-local function load(url)
+local function load(url, kwargs)
+	kwargs = kwargs or {}
+
+	local args = { '-iN' }
 	local bufnr = vim.api.nvim_get_current_buf()
+	-- Does next line do anything?
 	api.nvim_buf_set_name(bufnr, url)
 
+	if kwargs.trust then
+		table.insert(args, '-j')
+		table.insert(args, kwargs.trust)
+	end
+
+	table.insert(args, url)
 	Job:new({
 		command = 'gmni',
-		args = { '-iN', '-j', 'once', url },
+		args = args,
 
-		on_exit = vim.schedule_wrap(function(j, status)
-			local contents = j:result()
-			local gemini_status = table.remove(contents, 1)
+		on_exit = vim.schedule_wrap(function(job, status)
+			if status == 6 then
+				local stderr_result = job:stderr_result()
+				local option = vim.fn.input("Trust " .. stderr_result[2] .. "? (always/once): ")
+				load(url, { trust = option })
+				return
+			end
+
+			if status ~= 0 then
+				return
+			end
+
+			local result = job:result()
+			local gemini_status = table.remove(result, 1)
 			log.info("Status: ", status, gemini_status)
 
 			if string.find(gemini_status, "text/gemini") then
@@ -53,7 +74,7 @@ local function load(url)
 			end
 
 			api.nvim_buf_set_option(bufnr, 'modifiable', true)
-			api.nvim_buf_set_lines(bufnr, 0, -1, false, contents)
+			api.nvim_buf_set_lines(bufnr, 0, -1, false, result)
 
 			api.nvim_buf_set_option(bufnr, 'modifiable', false)
 			api.nvim_buf_set_option(bufnr, 'readonly', true)
