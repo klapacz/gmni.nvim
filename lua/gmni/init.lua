@@ -8,7 +8,7 @@ local function follow_link()
 	local line = api.nvim_get_current_line()
 
 	if not vim.startswith(line, "=>") then
-		log.warn("Not link line!")
+		log.warn("Not link line.")
 		return
 	end
 
@@ -16,7 +16,7 @@ local function follow_link()
 	local segments = vim.split(line, "%s", {trimempty = true})
 
 	if #segments < 1 then
-		log.warn("Link not provided!")
+		log.warn("Link not provided.")
 		return
 	end
 
@@ -32,7 +32,10 @@ local function follow_link()
 		local curr_url = url_parser.parse(api.nvim_buf_get_name(0))
 		local resolved = curr_url:resolve(url:normalize())
 		api.nvim_command(":e " .. resolved)
+		return
 	end
+
+	log.warn("Not a gemini link.")
 end
 
 local function load(url, kwargs)
