@@ -31,12 +31,15 @@ local function edit(url)
 		args = { '-j', 'always', url },
 		on_exit = vim.schedule_wrap(function(j, status)
 			log.info("Status: ", status)
-			log.info("Path: ", url)
 			local contents = j:result()
 
 			api.nvim_buf_set_option(bufnr, 'modifiable', true)
 			api.nvim_buf_set_lines(bufnr, 0, -1, false, contents)
+
 			api.nvim_buf_set_option(bufnr, 'modifiable', false)
+			api.nvim_buf_set_option(bufnr, 'readonly', true)
+			api.nvim_buf_set_option(bufnr, 'swapfile', false)
+			api.nvim_buf_set_option(bufnr, 'buftype', 'nowrite')
 			api.nvim_buf_set_option(bufnr, 'filetype', 'gemtext')
 
 			api.nvim_buf_set_keymap(bufnr, 'n', '<cr>', '<cmd>lua require("gmni").follow_link()<cr>', { silent = true })
