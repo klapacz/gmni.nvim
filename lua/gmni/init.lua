@@ -41,10 +41,16 @@ local function load(url)
 
 	Job:new({
 		command = 'gmni',
-		args = { '-j', 'always', url },
+		args = { '-iN', '-j', 'once', url },
+
 		on_exit = vim.schedule_wrap(function(j, status)
-			log.info("Status: ", status)
 			local contents = j:result()
+			local gemini_status = table.remove(contents, 1)
+			log.info("Status: ", status, gemini_status)
+
+			if string.find(gemini_status, "text/gemini") then
+				api.nvim_buf_set_option(bufnr, 'filetype', 'gemtext')
+			end
 
 			api.nvim_buf_set_option(bufnr, 'modifiable', true)
 			api.nvim_buf_set_lines(bufnr, 0, -1, false, contents)
@@ -53,7 +59,6 @@ local function load(url)
 			api.nvim_buf_set_option(bufnr, 'readonly', true)
 			api.nvim_buf_set_option(bufnr, 'swapfile', false)
 			api.nvim_buf_set_option(bufnr, 'buftype', 'nowrite')
-			api.nvim_buf_set_option(bufnr, 'filetype', 'gemtext')
 
 			api.nvim_buf_set_keymap(bufnr, 'n', '<cr>', '<cmd>lua require("gmni").follow_link()<cr>', { silent = true })
 			api.nvim_buf_set_keymap(bufnr, 'n', '<tab>', '<cmd>call GmniNextLink()<cr>', { silent = true })
