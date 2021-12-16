@@ -4,7 +4,16 @@ local Job = require('plenary.job')
 local api = vim.api
 
 local function follow_link()
-	log.info("follow link")
+	local line = api.nvim_get_current_line()
+	local url = vim.split(line, "%s")[2]
+
+	if vim.startswith(url, "gemini://") then
+		api.nvim_command(":e " .. url)
+		return
+	end
+
+	local bufname = api.nvim_buf_get_name(0)
+	api.nvim_command(":e " .. bufname .. url)
 end
 
 local function edit(url)
@@ -32,7 +41,7 @@ local function edit(url)
 end
 
 return {
-	edit = edit,
 	follow_link = follow_link,
+	edit = edit,
 }
 
