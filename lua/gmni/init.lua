@@ -93,17 +93,23 @@ local function load(url, kwargs)
 			if vim.startswith(header, "3") then
 				local status_code, meta = unpack(vim.split(header, " "))
 				log.warn("Redirection with code:", status_code, "to", meta)
+
 				goto_link(meta, url)
-				api.nvim_command(":bdelete " .. bufnr)
+				api.nvim_buf_delete(bufnr)
 				return
 			end
 
 			-- handle input
 			if vim.startswith(header, "1") then
-				local prompt_text = header:gsub("^1%d ", "")
-				local query = vim.fn.input(prompt_text .. ": ")
-				goto_link("?" .. query, url)
-				api.nvim_command(":bdelete " .. bufnr)
+				local prompt = header:gsub("^1%d ", "") .. ": "
+				local query = vim.fn.input(prompt)
+
+				if query ~= "" then
+					goto_link("?" .. query, url)
+				else
+					log.warn("Empty search query, canceling.")
+				end
+				api.nvim_buf_delete(bufnr, {})
 				return
 			end
 
