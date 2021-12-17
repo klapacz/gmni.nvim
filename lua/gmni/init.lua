@@ -4,6 +4,12 @@ local urltools = require('socket.url')
 
 local api = vim.api
 
+local function load_to_buf(bufnr, content)
+	api.nvim_buf_set_option(bufnr, 'modifiable', true)
+	api.nvim_buf_set_lines(bufnr, 0, -1, false, content)
+	api.nvim_buf_set_option(bufnr, 'modifiable', false)
+end
+
 -- 0 means no loading
 local loading = 0
 local spinner = {'|', '/', '-', '\\'}
@@ -16,9 +22,7 @@ local function spin(bufnr)
 	if loading > #spinner then
 		loading = 1
 	end
-	api.nvim_buf_set_option(bufnr, 'modifiable', true)
-	api.nvim_buf_set_lines(bufnr, 0, -1, false, { "Loading... " .. spinner[loading] })
-	api.nvim_buf_set_option(bufnr, 'modifiable', false)
+	load_to_buf(bufnr, { "Loading... " .. spinner[loading] })
 	loading = loading + 1
 
 	vim.fn.timer_start(200, function ()
@@ -65,22 +69,15 @@ local function follow_link()
 	goto_link(segments[1])
 end
 
-local function load_to_buf(bufnr, content)
-	api.nvim_buf_set_option(bufnr, 'modifiable', true)
-
-	api.nvim_buf_set_lines(bufnr, 0, -1, false, content)
-
-	api.nvim_buf_set_option(bufnr, 'modifiable', false)
-	api.nvim_buf_set_option(bufnr, 'swapfile', false)
-	api.nvim_buf_set_option(bufnr, 'buftype', 'nowrite')
-end
-
 local function load(url, kwargs)
 	kwargs = kwargs or {}
 
 	local args = { '-iN' }
 	local bufnr = vim.api.nvim_get_current_buf()
+	api.nvim_buf_set_option(bufnr, 'swapfile', false)
+	api.nvim_buf_set_option(bufnr, 'buftype', 'nowrite')
 
+	-- start spinner
 	loading = 1
 	spin(bufnr)
 
@@ -95,6 +92,7 @@ local function load(url, kwargs)
 		args = args,
 
 		on_exit = vim.schedule_wrap(function(job, exit_code)
+			-- stop spinner
 			loading = 0
 
 			if exit_code == 6 then
@@ -118,7 +116,7 @@ local function load(url, kwargs)
 				log.warn("Redirection with code:", status_code, "to", meta)
 
 				goto_link(meta, url)
-				api.nvim_buf_delete(bufnr)
+				api.nvim_buf_delete(bufnr, {})
 				return
 			end
 
