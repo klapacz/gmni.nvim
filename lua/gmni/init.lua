@@ -1,4 +1,4 @@
-local trust_policy, request, input
+local handle_unknown_trust, handle_input_request, request
 
 local Menu = require("nui.menu")
 local Input = require("nui.input")
@@ -54,7 +54,7 @@ local function follow_link()
 	goto_link(segments[1])
 end
 
-function trust_policy(bufnr, url, message)
+function handle_unknown_trust(bufnr, url, message)
 	helpers.load_to_buf(bufnr, { message[1], message[2], "" })
 	api.nvim_win_set_cursor(0, {3, 0})
 
@@ -79,7 +79,7 @@ function trust_policy(bufnr, url, message)
 	end, 5)
 end
 
-function input(bufnr, url, prompt)
+function handle_input_request(bufnr, url, prompt)
 	local function callback(query)
 		if query == nil or query == "" then
 			log.warn("Empty input, canceling.")
@@ -120,7 +120,7 @@ function request(url, kwargs)
 		on_exit = vim.schedule_wrap(function(job, exit_code)
 			spinner.stop(bufnr)
 			if exit_code == 6 then
-				trust_policy(bufnr, url, job:stderr_result())
+				handle_unknown_trust(bufnr, url, job:stderr_result())
 				return
 			end
 
@@ -145,7 +145,7 @@ function request(url, kwargs)
 			-- handle input
 			if vim.startswith(header, "1") then
 				local prompt = header:gsub("^1%d ", "")
-				input(bufnr, url, prompt)
+				handle_input_request(bufnr, url, prompt)
 				return
 			end
 
