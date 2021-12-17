@@ -15,7 +15,7 @@ local function goto_link(raw_url, base_url)
 	-- relative urls
 	if parsed.scheme == nil then
 		base_url = base_url or api.nvim_buf_get_name(0)
-		local absolute = urltools.absolute(base_url, raw_url)
+		local absolute = urltools.absolute(base_url, urltools.build(parsed))
 
 		api.nvim_command(":e " .. absolute)
 		return
