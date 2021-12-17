@@ -68,7 +68,7 @@ function trust_policy(bufnr, url, message)
 	end
 
 	-- HACK: timer is needed to open menu in relative to cursor location
-	vim.fn.timer_start(5, function ()
+	vim.defer_fn(function ()
 		Menu(
 			helpers.popup_options("Trust?"),
 			helpers.menu_options(callback, {
@@ -76,7 +76,7 @@ function trust_policy(bufnr, url, message)
 				Menu.item("once"),
 				Menu.item("exit"),
 		})):mount()
-	end)
+	end, 5)
 end
 
 function input(bufnr, url, prompt)
