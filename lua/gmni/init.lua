@@ -1,34 +1,10 @@
 local log = require('gmni.log')
 local Job = require('plenary.job')
 local urltools = require('socket.url')
+local helpers = require('gmni.helpers')
+local spinner = require('gmni.spinner')
 
 local api = vim.api
-
-local function load_to_buf(bufnr, content)
-	api.nvim_buf_set_option(bufnr, 'modifiable', true)
-	api.nvim_buf_set_lines(bufnr, 0, -1, false, content)
-	api.nvim_buf_set_option(bufnr, 'modifiable', false)
-end
-
--- 0 means no loading
-local loading = 0
-local spinner = {'|', '/', '-', '\\'}
-
-local function spin(bufnr)
-	if loading == 0 then
-		return
-	end
-
-	if loading > #spinner then
-		loading = 1
-	end
-	load_to_buf(bufnr, { "Loading... " .. spinner[loading] })
-	loading = loading + 1
-
-	vim.fn.timer_start(200, function ()
-		spin(bufnr)
-	end)
-end
 
 local function goto_link(raw_url, base_url)
 	local parsed = urltools.parse(raw_url)
@@ -76,10 +52,7 @@ local function load(url, kwargs)
 	local bufnr = vim.api.nvim_get_current_buf()
 	api.nvim_buf_set_option(bufnr, 'swapfile', false)
 	api.nvim_buf_set_option(bufnr, 'buftype', 'nowrite')
-
-	-- start spinner
-	loading = 1
-	spin(bufnr)
+	spinner.start(bufnr)
 
 	if kwargs.trust then
 		table.insert(args, '-j')
@@ -92,9 +65,7 @@ local function load(url, kwargs)
 		args = args,
 
 		on_exit = vim.schedule_wrap(function(job, exit_code)
-			-- stop spinner
-			loading = 0
-
+			spinner.stop(bufnr)
 			if exit_code == 6 then
 				local stderr_result = job:stderr_result()
 				local option = vim.fn.input("Trust " .. stderr_result[2] .. "? (always/once): ")
@@ -145,7 +116,7 @@ local function load(url, kwargs)
 				api.nvim_buf_set_option(bufnr, 'filetype', 'gemtext')
 			end
 
-			load_to_buf(bufnr, result)
+			helpers.load_to_buf(bufnr, result)
 
 			api.nvim_buf_set_keymap(bufnr, 'n', '<cr>', '<cmd>lua require("gmni").follow_link()<cr>', { silent = true })
 			api.nvim_buf_set_keymap(bufnr, 'n', '<tab>', '<cmd>call GmniNextLink()<cr>', { silent = true })
