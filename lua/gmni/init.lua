@@ -50,7 +50,7 @@ local function follow_link()
 	goto_link(segments[1])
 end
 
-local function load(url, kwargs)
+local function request(url, kwargs)
 	kwargs = kwargs or {}
 
 	local args = { '-iN' }
@@ -74,7 +74,7 @@ local function load(url, kwargs)
 			if exit_code == 6 then
 				local stderr_result = job:stderr_result()
 				local option = vim.fn.input("Trust " .. stderr_result[2] .. "? (always/once): ")
-				load(url, { trust = option })
+				request(url, { trust = option })
 				return
 			end
 
@@ -132,6 +132,6 @@ end
 
 return {
 	follow_link = follow_link,
-	load = load,
+	request = request,
 }
 

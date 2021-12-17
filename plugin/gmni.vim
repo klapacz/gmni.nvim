@@ -18,6 +18,6 @@ command! Gmni call Gmni()
 
 augroup Gmni
 	au!
-	autocmd BufReadCmd gemini://* lua (R or require)("gmni").load(vim.fn.expand("<amatch>"))
+	autocmd BufReadCmd gemini://* lua (R or require)("gmni").request(vim.fn.expand("<amatch>"))
 	autocmd BufWritePost gmni.vim source %
 augroup END
