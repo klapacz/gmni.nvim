@@ -1,24 +1,23 @@
 local log = require('gmni.log')
-local url_parser = require('gmni.url')
 local Job = require('plenary.job')
+local urltools = require('socket.url')
 
 local api = vim.api
 
 local function goto_link(raw_url, base_url)
-	local url = url_parser.parse(raw_url)
+	local parsed = urltools.parse(raw_url)
 
-	if url.scheme == "gemini" then
-		api.nvim_command(":e " .. url:normalize())
+	if parsed.scheme == "gemini" then
+		api.nvim_command(":e " .. urltools.build(parsed))
 		return
 	end
 
 	-- relative urls
-	if url.scheme == nil then
+	if parsed.scheme == nil then
 		base_url = base_url or api.nvim_buf_get_name(0)
-		local curr_url = url_parser.parse(base_url)
-		local resolved = curr_url:resolve(url:normalize())
+		local absolute = urltools.absolute(base_url, raw_url)
 
-		api.nvim_command(":e " .. resolved)
+		api.nvim_command(":e " .. absolute)
 		return
 	end
 
