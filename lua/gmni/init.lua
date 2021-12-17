@@ -6,8 +6,8 @@ local spinner = require('gmni.spinner')
 
 local api = vim.api
 
-local function goto_link(raw_url, base_url)
-	local parsed = urltools.parse(raw_url)
+local function goto_link(new_url, base_url)
+	local parsed = urltools.parse(new_url)
 
 	if parsed.scheme == "gemini" then
 		api.nvim_command(":e " .. urltools.build(parsed))
@@ -16,8 +16,13 @@ local function goto_link(raw_url, base_url)
 
 	-- relative urls
 	if parsed.scheme == nil then
-		base_url = base_url or api.nvim_buf_get_name(0)
-		local absolute = urltools.absolute(base_url, urltools.build(parsed))
+		base_url = urltools.parse(base_url or api.nvim_buf_get_name(0))
+		if base_url.path == nil then base_url.path = "/" end
+
+		local absolute = urltools.absolute(
+			urltools.build(base_url),
+			urltools.build(parsed)
+		)
 
 		api.nvim_command(":e " .. absolute)
 		return
