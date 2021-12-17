@@ -1,6 +1,7 @@
 local trust_policy, request
 
 local log = require('gmni.log')
+local Menu = require("nui.menu")
 local Job = require('plenary.job')
 local urltools = require('socket.url')
 local helpers = require('gmni.helpers')
@@ -52,25 +53,6 @@ local function follow_link()
 	goto_link(segments[1])
 end
 
-local Menu = require("nui.menu")
-
-local popup_options = {
-	relative = "cursor",
-	position = {
-		row = 0,
-		col = 0,
-	},
-	border = {
-		style = "rounded",
-		highlight = "FloatBorder",
-		text = {
-			top = "Trust?",
-			top_align = "center",
-		},
-	},
-	highlight = "Normal:Normal",
-}
-
 function trust_policy(bufnr, url, message)
 	helpers.load_to_buf(bufnr, { message[1], message[2], "" })
 	api.nvim_win_set_cursor(0, {3, 0})
@@ -84,25 +66,15 @@ function trust_policy(bufnr, url, message)
 		request(url, { trust = item.text })
 	end
 
-	-- HACK: timer is needed to open menu in proper location
+	-- HACK: timer is needed to open menu in relative to cursor location
 	vim.fn.timer_start(5, function ()
-		Menu(popup_options, {
-			relative = "cursor",
-			lines = {
+		Menu(
+			helpers.popup_options("Trust?"),
+			helpers.menu_options(callback, {
 				Menu.item("always"),
 				Menu.item("once"),
 				Menu.item("exit"),
-			},
-			keymap = {
-				focus_next = { "j", "<tab>" },
-				focus_prev = { "k", "<s-tab>" },
-				close = { "<Esc>" },
-				submit = { "<CR>" },
-			},
-			min_width = 20,
-			on_close = callback,
-			on_submit = callback,
-		}):mount()
+		})):mount()
 	end)
 end
 
