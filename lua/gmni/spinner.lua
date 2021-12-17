@@ -12,7 +12,7 @@ local function spin(bufnr)
 	if loading > #spinner then
 		loading_buffers[bufnr] = 1
 	end
-	helpers.load_to_buf(bufnr, { "Loading... " .. spinner[loading] })
+	helpers.load_to_buf(bufnr, { "Loading... " .. spinner[loading_buffers[bufnr]] })
 	loading_buffers[bufnr] = loading + 1
 
 	vim.fn.timer_start(200, function ()
