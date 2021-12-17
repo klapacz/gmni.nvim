@@ -4,20 +4,19 @@ local loading_buffers = {}
 local spinner = {'|', '/', '-', '\\'}
 
 local function spin(bufnr)
-	local loading = loading_buffers[bufnr]
-	if loading == nil then
+	if loading_buffers[bufnr] == nil then
 		return
 	end
 
-	if loading > #spinner then
+	if loading_buffers[bufnr] > #spinner then
 		loading_buffers[bufnr] = 1
 	end
 	helpers.load_to_buf(bufnr, { "Loading... " .. spinner[loading_buffers[bufnr]] })
-	loading_buffers[bufnr] = loading + 1
+	loading_buffers[bufnr] = loading_buffers[bufnr] + 1
 
-	vim.fn.timer_start(200, function ()
+	vim.defer_fn(function ()
 		spin(bufnr)
-	end)
+	end, 150)
 end
 
 local function start(bufnr)
