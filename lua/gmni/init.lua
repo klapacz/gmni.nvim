@@ -82,7 +82,7 @@ local function load(url, kwargs)
 			end
 
 			if exit_code ~= 0 then
-				log.debug("Error: ", unpack(job:stderr_result()))
+				log.debug("`gmni` error:", unpack(job:stderr_result()))
 				return
 			end
 
@@ -113,7 +113,12 @@ local function load(url, kwargs)
 				return
 			end
 
-			log.info("Status: ", exit_code, header)
+			-- other not success statuses
+			if not vim.startswith(header, "2") then
+				log.warn("gemini unsuccessful response:", header)
+			end
+
+			log.info("Status:", header)
 
 			if string.find(header, "text/gemini") then
 				api.nvim_buf_set_option(bufnr, 'filetype', 'gemtext')
