@@ -60,8 +60,6 @@ local function load(url, kwargs)
 
 	local args = { '-iN' }
 	local bufnr = vim.api.nvim_get_current_buf()
-	-- Does next line do anything?
-	api.nvim_buf_set_name(bufnr, url)
 
 	if kwargs.trust then
 		table.insert(args, '-j')
