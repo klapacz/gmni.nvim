@@ -1,11 +1,12 @@
-local trust_policy, request
+local trust_policy, request, input
 
-local log = require('gmni.log')
 local Menu = require("nui.menu")
+local Input = require("nui.input")
 local Job = require('plenary.job')
 local urltools = require('socket.url')
 local helpers = require('gmni.helpers')
 local spinner = require('gmni.spinner')
+local log = require('gmni.log')
 
 local api = vim.api
 
@@ -78,6 +79,25 @@ function trust_policy(bufnr, url, message)
 	end)
 end
 
+function input(bufnr, url, prompt)
+	local function callback(query)
+		if query == nil or query == "" then
+			log.warn("Empty input, canceling.")
+		else
+			goto_link("?" .. query, url)
+		end
+		api.nvim_buf_delete(bufnr, {})
+	end
+
+	local options = helpers.popup_options(prompt)
+	options.size = #prompt + 2
+	Input(options, {
+	  prompt = "> ",
+	  on_close = callback,
+	  on_submit = callback,
+	}):mount()
+end
+
 function request(url, kwargs)
 	kwargs = kwargs or {}
 
@@ -124,15 +144,8 @@ function request(url, kwargs)
 
 			-- handle input
 			if vim.startswith(header, "1") then
-				local prompt = header:gsub("^1%d ", "") .. ": "
-				local query = vim.fn.input(prompt)
-
-				if query ~= "" then
-					goto_link("?" .. query, url)
-				else
-					log.warn("Empty search query, canceling.")
-				end
-				api.nvim_buf_delete(bufnr, {})
+				local prompt = header:gsub("^1%d ", "")
+				input(bufnr, url, prompt)
 				return
 			end
 
