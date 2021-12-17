@@ -4,7 +4,7 @@ local Job = require('plenary.job')
 
 local api = vim.api
 
-local function goto_link(raw_url)
+local function goto_link(raw_url, base_url)
 	local url = url_parser.parse(raw_url)
 
 	if url.scheme == "gemini" then
@@ -14,8 +14,10 @@ local function goto_link(raw_url)
 
 	-- relative urls
 	if url.scheme == nil then
-		local curr_url = url_parser.parse(api.nvim_buf_get_name(0))
+		base_url = base_url or api.nvim_buf_get_name(0)
+		local curr_url = url_parser.parse(base_url)
 		local resolved = curr_url:resolve(url:normalize())
+
 		api.nvim_command(":e " .. resolved)
 		return
 	end
@@ -92,7 +94,16 @@ local function load(url, kwargs)
 			if vim.startswith(header, "3") then
 				local status_code, meta = unpack(vim.split(header, " "))
 				log.warn("Redirection with code:", status_code, "to", meta)
-				goto_link(meta)
+				goto_link(meta, url)
+				api.nvim_command(":bdelete " .. bufnr)
+				return
+			end
+
+			-- handle input
+			if vim.startswith(header, "1") then
+				local prompt_text = header:gsub("^1%d ", "")
+				local query = vim.fn.input(prompt_text .. ": ")
+				goto_link("?" .. query, url)
 				api.nvim_command(":bdelete " .. bufnr)
 				return
 			end
