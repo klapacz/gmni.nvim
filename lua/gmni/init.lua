@@ -53,9 +53,9 @@ local function follow_link()
 end
 
 function handle_unknown_trust(bufnr, url, message)
-	local prompt = message[1] .. "\n" ..  message[2] .. "\n\nTrust?"
+	vim.notify(message[1] .. "\n" ..  message[2], "warn")
 
-	vim.ui.select({ "always", "once" }, { prompt = prompt }, function (item)
+	vim.ui.select({ "always", "once" }, { prompt =  "Trust?" }, function (item)
 		if item == nil then
 			api.nvim_buf_delete(bufnr, {})
 			return
@@ -80,7 +80,7 @@ function request(url, kwargs)
 	kwargs = kwargs or {}
 
 	local args = { '-iN' }
-	local bufnr = vim.api.nvim_get_current_buf()
+	local bufnr = api.nvim_get_current_buf()
 	api.nvim_buf_set_option(bufnr, 'swapfile', false)
 	api.nvim_buf_set_option(bufnr, 'buftype', 'nowrite')
 	spinner.start(bufnr)
