@@ -1,7 +1,5 @@
 local handle_unknown_trust, handle_input_request, request
 
-local Menu = require("nui.menu")
-local Input = require("nui.input")
 local Job = require('plenary.job')
 local urltools = require('socket.url')
 local helpers = require('gmni.helpers')
@@ -55,47 +53,27 @@ local function follow_link()
 end
 
 function handle_unknown_trust(bufnr, url, message)
-	helpers.load_to_buf(bufnr, { message[1], message[2], "" })
-	api.nvim_win_set_cursor(0, {3, 0})
+	local prompt = message[1] .. "\n" ..  message[2] .. "\n\nTrust?"
 
-	local function callback (item)
-		if item == nil or item.text == "exit" then
+	vim.ui.select({ "always", "once" }, { prompt = prompt }, function (item)
+		if item == nil then
 			api.nvim_buf_delete(bufnr, {})
 			return
 		end
 
-		request(url, { trust = item.text })
-	end
-
-	-- HACK: timer is needed to open menu in relative to cursor location
-	vim.defer_fn(function ()
-		Menu(
-			helpers.popup_options("Trust?"),
-			helpers.menu_options(callback, {
-				Menu.item("always"),
-				Menu.item("once"),
-				Menu.item("exit"),
-		})):mount()
-	end, 5)
+		request(url, { trust = item })
+	end)
 end
 
 function handle_input_request(bufnr, url, prompt)
-	local function callback(query)
+	vim.ui.input(prompt .. ": ", function (query)
 		if query == nil or query == "" then
 			log.warn("Empty input, canceling.")
 		else
 			goto_link("?" .. query, url)
 		end
 		api.nvim_buf_delete(bufnr, {})
-	end
-
-	local options = helpers.popup_options(prompt)
-	options.size = #prompt + 2
-	Input(options, {
-	  prompt = "> ",
-	  on_close = callback,
-	  on_submit = callback,
-	}):mount()
+	end)
 end
 
 function request(url, kwargs)
