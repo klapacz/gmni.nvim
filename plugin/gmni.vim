@@ -1,6 +1,5 @@
 function! Gmni()
-	lua for k in pairs(package.loaded) do if k:match("^gmni") then package.loaded[k] = nil end end
-
+	lua require('plenary.reload').reload_module("gmni")
 	tabnew gemini://gemini.circumlunar.space/
 endfun
 
