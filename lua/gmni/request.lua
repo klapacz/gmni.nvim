@@ -1,5 +1,3 @@
-local handle_unknown_trust, handle_input_request, request
-
 local Job = require('plenary.job')
 local helpers = require('gmni.helpers')
 local spinner = require('gmni.spinner')
@@ -8,31 +6,7 @@ local links = require('gmni.links')
 
 local api = vim.api
 
-function handle_unknown_trust(bufnr, url, message)
-	vim.notify(message[1] .. "\n" ..  message[2], "warn")
-
-	vim.ui.select({ "always", "once" }, { prompt =  "Trust?" }, function (item)
-		if item == nil then
-			api.nvim_buf_delete(bufnr, {})
-			return
-		end
-
-		request(url, { trust = item })
-	end)
-end
-
-function handle_input_request(bufnr, url, prompt)
-	vim.ui.input(prompt .. ": ", function (query)
-		if query == nil or query == "" then
-			log.warn("Empty input, canceling.")
-		else
-			links.open("?" .. query, url)
-		end
-		api.nvim_buf_delete(bufnr, {})
-	end)
-end
-
-function request(url, kwargs)
+local function request(url, kwargs)
 	kwargs = kwargs or {}
 
 	local args = { '-iN' }
@@ -54,7 +28,17 @@ function request(url, kwargs)
 		on_exit = vim.schedule_wrap(function(job, exit_code)
 			spinner.stop(bufnr)
 			if exit_code == 6 then
-				handle_unknown_trust(bufnr, url, job:stderr_result())
+				local message = job:stderr_result()
+				vim.notify(message[1] .. "\n" ..  message[2], "warn")
+
+				vim.ui.select({ "always", "once" }, { prompt =  "Trust?" }, function (item)
+					if item == nil then
+						api.nvim_buf_delete(bufnr, {})
+						return
+					end
+
+					request(url, { trust = item })
+				end)
 				return
 			end
 
@@ -79,7 +63,14 @@ function request(url, kwargs)
 			-- handle input
 			if vim.startswith(header, "1") then
 				local prompt = header:gsub("^1%d ", "")
-				handle_input_request(bufnr, url, prompt)
+				vim.ui.input(prompt .. ": ", function (query)
+					if query == nil or query == "" then
+						log.warn("Empty input, canceling.")
+					else
+						links.open("?" .. query, url)
+					end
+					api.nvim_buf_delete(bufnr, {})
+				end)
 				return
 			end
 
@@ -102,6 +93,5 @@ function request(url, kwargs)
 		end),
 	}):start()
 end
-
 
 return request
