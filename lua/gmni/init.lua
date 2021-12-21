@@ -33,7 +33,7 @@ local function goto_link(new_url, base_url)
 	log.warn("Not a gemini link.")
 end
 
-local function follow_link()
+local function enter_link()
 	local line = api.nvim_get_current_line()
 
 	if not vim.startswith(line, "=>") then
@@ -140,7 +140,7 @@ function request(url, kwargs)
 
 			helpers.load_to_buf(bufnr, result)
 
-			api.nvim_buf_set_keymap(bufnr, 'n', '<cr>', '<cmd>lua require("gmni").follow_link()<cr>', { silent = true })
+			api.nvim_buf_set_keymap(bufnr, 'n', '<cr>', '<cmd>lua require("gmni").enter_link()<cr>', { silent = true })
 			api.nvim_buf_set_keymap(bufnr, 'n', '<tab>', '<cmd>call GmniNextLink()<cr>', { silent = true })
 			api.nvim_buf_set_keymap(bufnr, 'n', '<s-tab>', '<cmd>call GmniPrevLink()<cr>', { silent = true })
 		end),
@@ -148,7 +148,7 @@ function request(url, kwargs)
 end
 
 return {
-	follow_link = follow_link,
+	enter_link = enter_link,
 	request = request,
 }
 
