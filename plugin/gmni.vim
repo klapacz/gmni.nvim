@@ -1,5 +1,5 @@
 function! Gmni()
-	lua require('plenary.reload').reload_module("gmni")
+	" lua require('plenary.reload').reload_module("gmni")
 	tabnew gemini://gemini.circumlunar.space/
 endfun
 
@@ -17,6 +17,6 @@ command! Gmni call Gmni()
 
 augroup Gmni
 	au!
-	autocmd BufReadCmd gemini://* lua (R or require)("gmni").request(vim.fn.expand("<amatch>"))
-	autocmd BufWritePost gmni.vim source %
+	autocmd BufReadCmd gemini://* lua require("gmni").request(vim.fn.expand("<amatch>"))
+	" autocmd BufWritePost gmni.vim source %
 augroup END

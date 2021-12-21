@@ -83,13 +83,10 @@ local function request(url, kwargs)
 
 			if string.find(header, "text/gemini") then
 				api.nvim_buf_set_option(bufnr, 'filetype', 'gemtext')
+				helpers.set_buf_keymaps(bufnr)
 			end
 
 			helpers.load_to_buf(bufnr, result)
-
-			api.nvim_buf_set_keymap(bufnr, 'n', '<cr>', '<cmd>lua require("gmni").enter_link()<cr>', { silent = true })
-			api.nvim_buf_set_keymap(bufnr, 'n', '<tab>', '<cmd>call GmniNextLink()<cr>', { silent = true })
-			api.nvim_buf_set_keymap(bufnr, 'n', '<s-tab>', '<cmd>call GmniPrevLink()<cr>', { silent = true })
 		end),
 	}):start()
 end
