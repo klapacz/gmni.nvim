@@ -1,0 +1,107 @@
+local handle_unknown_trust, handle_input_request, request
+
+local Job = require('plenary.job')
+local helpers = require('gmni.helpers')
+local spinner = require('gmni.spinner')
+local log = require('gmni.log')
+local links = require('gmni.links')
+
+local api = vim.api
+
+function handle_unknown_trust(bufnr, url, message)
+	vim.notify(message[1] .. "\n" ..  message[2], "warn")
+
+	vim.ui.select({ "always", "once" }, { prompt =  "Trust?" }, function (item)
+		if item == nil then
+			api.nvim_buf_delete(bufnr, {})
+			return
+		end
+
+		request(url, { trust = item })
+	end)
+end
+
+function handle_input_request(bufnr, url, prompt)
+	vim.ui.input(prompt .. ": ", function (query)
+		if query == nil or query == "" then
+			log.warn("Empty input, canceling.")
+		else
+			links.open("?" .. query, url)
+		end
+		api.nvim_buf_delete(bufnr, {})
+	end)
+end
+
+function request(url, kwargs)
+	kwargs = kwargs or {}
+
+	local args = { '-iN' }
+	local bufnr = api.nvim_get_current_buf()
+	api.nvim_buf_set_option(bufnr, 'swapfile', false)
+	api.nvim_buf_set_option(bufnr, 'buftype', 'nowrite')
+	spinner.start(bufnr)
+
+	if kwargs.trust then
+		table.insert(args, '-j')
+		table.insert(args, kwargs.trust)
+	end
+
+	table.insert(args, url)
+	Job:new({
+		command = 'gmni',
+		args = args,
+
+		on_exit = vim.schedule_wrap(function(job, exit_code)
+			spinner.stop(bufnr)
+			if exit_code == 6 then
+				handle_unknown_trust(bufnr, url, job:stderr_result())
+				return
+			end
+
+			if exit_code ~= 0 then
+				log.debug("`gmni` error:", unpack(job:stderr_result()))
+				return
+			end
+
+			local result = job:result()
+			local header = table.remove(result, 1)
+
+			-- handle redirection
+			if vim.startswith(header, "3") then
+				local status_code, meta = unpack(vim.split(header, " "))
+				log.warn("Redirection with code:", status_code, "to", meta)
+
+				links.open(meta, url)
+				api.nvim_buf_delete(bufnr, {})
+				return
+			end
+
+			-- handle input
+			if vim.startswith(header, "1") then
+				local prompt = header:gsub("^1%d ", "")
+				handle_input_request(bufnr, url, prompt)
+				return
+			end
+
+			-- other not success statuses
+			if not vim.startswith(header, "2") then
+				log.warn("gemini unsuccessful response:", header)
+			end
+
+			log.info("Status:", header)
+
+			if string.find(header, "text/gemini") then
+				api.nvim_buf_set_option(bufnr, 'filetype', 'gemtext')
+			end
+
+			helpers.load_to_buf(bufnr, result)
+
+			api.nvim_buf_set_keymap(bufnr, 'n', '<cr>', '<cmd>lua require("gmni").enter_link()<cr>', { silent = true })
+			api.nvim_buf_set_keymap(bufnr, 'n', '<tab>', '<cmd>call GmniNextLink()<cr>', { silent = true })
+			api.nvim_buf_set_keymap(bufnr, 'n', '<s-tab>', '<cmd>call GmniPrevLink()<cr>', { silent = true })
+		end),
+	}):start()
+end
+
+
+return request
